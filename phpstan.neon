@@ -1,0 +1,24 @@
+parameters:
+    level: 8
+    paths:
+        - src
+    ignoreErrors:
+        # Allow mixed types in promise generics for flexibility
+        - '#Parameter \#1 \$value of method ElementaryFramework\\Core\\Async\\Promise::resolve\(\) expects mixed, .* given#'
+        # Allow reflection usage in Deferred for accessing Promise methods
+        - '#Call to method setAccessible\(\) on ReflectionProperty#'
+        # Allow WeakMap usage which might not be fully understood by PHPStan
+        - '#Property ElementaryFramework\\Core\\Async\\Promise::\$settledPromises is never written, only read#'
+        # Allow error_log calls for internal error handling
+        - '#Function error_log invoked with 1 parameter, 0-4 required#'
+        # Allow register_shutdown_function for delayed execution simulation
+        - '#Function register_shutdown_function invoked#'
+        # Allow usleep for timing simulation in examples and tests
+        - '#Function usleep invoked#'
+        # Allow pcntl functions when extension is available
+        - '#Function pcntl_signal invoked#'
+        # Allow hrtime for high-resolution timing
+        - '#Function hrtime invoked#'
+        # Allow spl_object_id for unique callback identification
+        - '#Function spl_object_id invoked#'
+    reportUnmatchedIgnoredErrors: false
