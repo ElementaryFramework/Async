@@ -25,12 +25,16 @@
   ],
   "autoload": {
     "psr-4": {
-      "ElementaryFramework\\Core\\Async\\": "src/Core/Async/",
-      "Tests\\": "tests/"
+      "ElementaryFramework\\Core\\Async\\": "src/Core/Async/"
     },
     "files": [
       "src/Core/Async/functions.php"
     ]
+  },
+  "autoload-dev": {
+    "psr-4": {
+      "Tests\\": "tests/"
+    }
   },
   "require-dev": {
     "pestphp/pest": "^4.1.3",

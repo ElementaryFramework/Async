@@ -239,7 +239,68 @@ describe('EventLoop', function () {
 
             $this->runEventLoopBriefly();
 
-            expect($executed)->toBeTrue();
+            expect($executed)->toBeTrue()
+                ->and($promise->unwrap())->toBe('async result');
+        });
+
+        it('handles simple generator functions', function () {
+            if (!Async::supportsFibers()) {
+                $this->markTestSkipped('Fibers not supported in this PHP version');
+            }
+
+            $loop = EventLoop::getInstance();
+            $executed = false;
+            $result = null;
+
+            $promise = $loop->async(function() use (&$executed) {
+                yield 'first';
+                $executed = true;
+                return 'async result';
+            });
+
+            expect($promise)->toBePromise()
+                ->and($loop->hasPendingWork())->toBeTrue();
+
+            $this->runEventLoopBriefly();
+
+            expect($executed)->toBeTrue()
+                ->and($promise->unwrap())->toBe('async result');
+        });
+
+        it('handles generator functions yielding fibers', function () {
+            if (!Async::supportsFibers()) {
+                $this->markTestSkipped('Fibers not supported in this PHP version');
+            }
+
+            $loop = EventLoop::getInstance();
+            $executed = false;
+            $result = null;
+
+            $promise = $loop->async(function () use (&$executed): Generator {
+                $dots = "";
+                $fiber = new Fiber(function () use (&$dots, &$executed) {
+                    while (!$executed) {
+                        usleep(100000);
+                        $dots .= ".";
+                        Fiber::suspend($dots);
+                    }
+                });
+
+                while ($dots !== ".................") {
+                    yield $fiber;
+                }
+
+                $executed = true;
+                return $dots;
+            });
+
+            expect($promise)->toBePromise()
+                ->and($loop->hasPendingWork())->toBeTrue();
+
+            $loop->resume();
+
+            expect($executed)->toBeTrue()
+                ->and($promise->unwrap())->toBe('.................');
         });
 
         it('handles exceptions in async operations', function () {
