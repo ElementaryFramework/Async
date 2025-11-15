@@ -499,7 +499,6 @@ final class Async
         $id = ++$counter;
         $lastExecution[$id] = 0;
 
-        /** @var callable(): T $operation */
         return function () use ($operation, $interval, $id, &$lastExecution): PromiseInterface {
             $now = Async::getCurrentTime();
             $timeSinceLastExecution = $now - $lastExecution[$id];

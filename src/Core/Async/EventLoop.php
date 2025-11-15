@@ -6,6 +6,7 @@ namespace ElementaryFramework\Core\Async;
 
 use BadMethodCallException;
 use Fiber;
+use Generator;
 use SplObjectStorage;
 use SplQueue;
 use Throwable;
@@ -235,7 +236,7 @@ class EventLoop
     /**
      * Cancel a scheduled timer.
      *
-     * @param int $timerId The timer ID returned by setTimeout or setInterval
+     * @param int $timerId The timer's ID returned by setTimeout or setInterval
      * @return void
      */
     public function clearTimer(int $timerId): void
@@ -268,7 +269,29 @@ class EventLoop
                 $cancellationToken?->throwIfCancellationRequested();
 
                 $result = $callable();
-                $deferred->resolve($result);
+
+                if ($result instanceof Generator) {
+                    $value = null;
+                    while ($result->valid()) {
+                        $yielded = $result->current();
+
+                        // If the yielded value is a Fiber, resume it
+                        if ($yielded instanceof Fiber) {
+                            $value = $yielded->isTerminated()
+                                ? $yielded->getReturn()
+                                : ($yielded->isSuspended() ? $yielded->resume() : $yielded->start());
+                        } else {
+                            $value = $yielded;
+                        }
+
+                        EventLoop::getInstance()->yield();
+                        $result->next();
+                    }
+
+                    $deferred->resolve($result->getReturn() ?? $value ?? null);
+                } else {
+                    $deferred->resolve($result);
+                }
             } catch (Throwable $e) {
                 $deferred->reject($e);
             }
@@ -281,7 +304,7 @@ class EventLoop
             'startTime' => $this->getCurrentTime()
         ];
 
-        // Set up cancellation if token is provided
+        // Set up cancellation if a token is provided
         $cancellationToken?->register(function () use ($fiber, $deferred): void {
             if (isset($this->fibers[$fiber])) {
                 try {
