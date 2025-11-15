@@ -18,7 +18,7 @@ use RuntimeException;
  */
 class CancellationTokenSource
 {
-    private CancellationToken $token;
+    private CancellationTokenInterface $token;
     private bool $disposed = false;
 
     /**
@@ -124,12 +124,7 @@ class CancellationTokenSource
         $source = new self();
 
         // Replace the source's token with a combined token
-        $combinedToken = CombinedCancellationToken::create(...$tokens);
-
-        // Use reflection to replace the token (this is an internal implementation)
-        $reflection = new ReflectionClass($source);
-        $tokenProperty = $reflection->getProperty('token');
-        $tokenProperty->setValue($source, $combinedToken);
+        $source->token = CombinedCancellationToken::create(...$tokens);
 
         return $source;
     }

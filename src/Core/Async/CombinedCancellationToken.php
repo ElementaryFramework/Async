@@ -37,7 +37,7 @@ class CombinedCancellationToken implements CancellationTokenInterface
     /**
      * {@inheritDoc}
      */
-    public private(set) ?string $reason = null;
+    private(set) ?string $reason = null;
 
     /**
      * Create a new CombinedCancellationToken.
@@ -161,36 +161,9 @@ class CombinedCancellationToken implements CancellationTokenInterface
     }
 
     /**
-     * Set up cancellation handling for all source tokens.
+     * {@inheritDoc}
      */
-    private function setupCancellationHandling(): void
-    {
-        foreach ($this->tokens as $token) {
-            // Check if already canceled
-            if ($token->isCancellationRequested()) {
-                $this->handleCancellation($token->reason);
-                return;
-            }
-
-            // Register for future cancellation
-            if ($token->canBeCanceled()) {
-                $unregister = $token->register(function () use ($token): void {
-                    if (!$this->canceled) {
-                        $this->handleCancellation($token->reason);
-                    }
-                });
-
-                $this->unregisterFunctions[] = $unregister;
-            }
-        }
-    }
-
-    /**
-     * Handle cancellation from one of the source tokens.
-     *
-     * @param string|null $reason The reason for cancellation
-     */
-    private function handleCancellation(?string $reason): void
+    public function cancel(?string $reason = null): void
     {
         if ($this->canceled) {
             return;
@@ -214,6 +187,31 @@ class CombinedCancellationToken implements CancellationTokenInterface
             $unregister();
         }
         $this->unregisterFunctions = [];
+    }
+
+    /**
+     * Set up cancellation handling for all source tokens.
+     */
+    private function setupCancellationHandling(): void
+    {
+        foreach ($this->tokens as $token) {
+            // Check if already canceled
+            if ($token->isCancellationRequested()) {
+                $this->cancel($token->reason);
+                return;
+            }
+
+            // Register for future cancellation
+            if ($token->canBeCanceled()) {
+                $unregister = $token->register(function () use ($token): void {
+                    if (!$this->canceled) {
+                        $this->cancel($token->reason);
+                    }
+                });
+
+                $this->unregisterFunctions[] = $unregister;
+            }
+        }
     }
 
     /**

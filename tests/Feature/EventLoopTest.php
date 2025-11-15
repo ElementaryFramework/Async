@@ -342,6 +342,29 @@ describe('EventLoop', function () {
             expect($executed)->toBeFalse();
             $this->assertPromiseRejectsWith($promise, CancellationException::class);
         });
+
+        it('allows early cancellation of async operations', function () {
+            if (!Async::supportsFibers()) {
+                $this->markTestSkipped('Fibers not supported in this PHP version');
+            }
+
+            $loop = EventLoop::getInstance();
+            $tokenSource = Async::createCancellationTokenSource();
+            $executed = false;
+
+            $tokenSource->cancel('test cancellation');
+
+            $promise = $loop->async(function() use (&$executed, $tokenSource) {
+                $tokenSource->getToken()->throwIfCancellationRequested();
+                $executed = true;
+                return 'completed';
+            }, $tokenSource->getToken());
+
+            $this->runEventLoopBriefly();
+
+            expect($executed)->toBeFalse();
+            $this->assertPromiseRejectsWith($promise, CancellationException::class);
+        });
     });
 
     describe('delay method', function () {

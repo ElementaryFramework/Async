@@ -60,8 +60,8 @@ class Promise implements PromiseInterface
         if ($executor !== null) {
             try {
                 $executor(
-                    fn(mixed $value) => $this->resolve($value),
-                    fn(Throwable $reason) => $this->reject($reason)
+                    $this->resolve(...),
+                    $this->reject(...)
                 );
             } catch (Throwable $e) {
                 $this->reject($e);
@@ -212,8 +212,8 @@ class Promise implements PromiseInterface
         // Handle thenable values (promises)
         if ($value instanceof PromiseInterface) {
             $value->then(
-                fn(mixed $v) => $this->resolve($v),
-                fn(Throwable $r) => $this->reject($r)
+                $this->resolve(...),
+                $this->reject(...)
             );
             return;
         }

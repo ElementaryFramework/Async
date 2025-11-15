@@ -128,12 +128,7 @@ class CancellationToken implements CancellationTokenInterface
     }
 
     /**
-     * Cancel this token with an optional reason.
-     *
-     * This method should only be called by the token's owner (e.g., CancellationTokenSource).
-     *
-     * @param string|null $reason Optional reason for cancellation
-     * @internal
+     * {@inheritDoc}
      */
     public function cancel(?string $reason = null): void
     {
