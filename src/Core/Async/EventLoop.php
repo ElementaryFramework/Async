@@ -70,10 +70,6 @@ class EventLoop
      */
     private function __construct()
     {
-        if (!function_exists('uv_loop_new')) {
-            throw new BadMethodCallException('Cannot create EventLoop, ext-uv extension missing');
-        }
-
         $this->taskQueue = new SplQueue();
         $this->fibers = new SplObjectStorage();
         $this->startTime = $this->getCurrentTime();
